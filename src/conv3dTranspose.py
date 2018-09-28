@@ -4,6 +4,8 @@ from keras.engine import InputSpec
 from keras import backend as K
 from keras.utils import conv_utils
 import tensorflow as tf
+
+
 def _preprocess_deconv3d_output_shape(x, shape, data_format):
     if data_format == 'channels_first':
         shape = (shape[0], shape[2], shape[3], shape[4], shape[1])
@@ -13,6 +15,7 @@ def _preprocess_deconv3d_output_shape(x, shape, data_format):
         shape = tf.stack(list(shape))
     return shape
 
+
 def _preprocess_padding(padding):
     if padding == 'same':
         padding = 'SAME'
@@ -21,6 +24,7 @@ def _preprocess_padding(padding):
     else:
         raise ValueError('Invalid border mode:', padding)
     return padding
+
 
 def conv3d_transpose(x, kernel, output_shape, strides=(1, 1, 1),
                      padding='valid', data_format=None):
@@ -43,7 +47,7 @@ def conv3d_transpose(x, kernel, output_shape, strides=(1, 1, 1),
         ValueError: if `data_format` is neither `channels_last` or `channels_first`.
     """
     if data_format is None:
-        data_format = image_data_format()
+        data_format = K.image_data_format()
     if data_format not in {'channels_first', 'channels_last'}:
         raise ValueError('Unknown data_format ' + str(data_format))
     if isinstance(output_shape, (tuple, list)):
@@ -59,12 +63,14 @@ def conv3d_transpose(x, kernel, output_shape, strides=(1, 1, 1),
     x = _postprocess_conv3d_output(x, data_format)
     return x
 
+
 def _preprocess_conv3d_input(x, data_format):
     if K.dtype(x) == 'float64':
         x = tf.cast(x, 'float32')
     if data_format == 'channels_first':
         x = tf.transpose(x, (0, 2, 3, 4, 1))
     return x
+
 
 def _postprocess_conv3d_output(x, data_format):
     if data_format == 'channels_first':
@@ -73,6 +79,8 @@ def _postprocess_conv3d_output(x, data_format):
     if K.floatx() == 'float64':
         x = tf.cast(x, 'float64')
     return x
+
+
 class Conv3DTranspose(Conv3D):
     """Transposed convolution layer (sometimes called Deconvolution).
     The need for transposed convolutions generally arises
@@ -232,15 +240,9 @@ class Conv3DTranspose(Conv3D):
         stride_d, stride_h, stride_w = self.strides
 
         # Infer the dynamic output shape:
-        out_depth = conv_utils.deconv_length(depth,
-                                              stride_h, kernel_h,
-                                              self.padding)
-        out_height = conv_utils.deconv_length(height,
-                                              stride_h, kernel_h,
-                                              self.padding)
-        out_width = conv_utils.deconv_length(width,
-                                             stride_w, kernel_w,
-                                             self.padding)
+        out_depth = conv_utils.deconv_length(depth, stride_h, kernel_h, self.padding, None)
+        out_height = conv_utils.deconv_length(height, stride_h, kernel_h, self.padding, None)
+        out_width = conv_utils.deconv_length(width, stride_w, kernel_w, self.padding, None)
         if self.data_format == 'channels_first':
             output_shape = (batch_size, self.filters, out_depth, out_height, out_width)
         else:
@@ -275,12 +277,9 @@ class Conv3DTranspose(Conv3D):
         stride_d, stride_h, stride_w = self.strides
 
         output_shape[c_axis] = self.filters
-        output_shape[d_axis] = conv_utils.deconv_length(
-            output_shape[d_axis], stride_d, kernel_d, self.padding)
-        output_shape[h_axis] = conv_utils.deconv_length(
-            output_shape[h_axis], stride_h, kernel_h, self.padding)
-        output_shape[w_axis] = conv_utils.deconv_length(
-            output_shape[w_axis], stride_w, kernel_w, self.padding)
+        output_shape[d_axis] = conv_utils.deconv_length(output_shape[d_axis], stride_d, kernel_d, self.padding, None)
+        output_shape[h_axis] = conv_utils.deconv_length(output_shape[h_axis], stride_h, kernel_h, self.padding, None)
+        output_shape[w_axis] = conv_utils.deconv_length(output_shape[w_axis], stride_w, kernel_w, self.padding, None)
         return tuple(output_shape)
 
     def get_config(self):

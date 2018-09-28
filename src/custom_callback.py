@@ -3,6 +3,8 @@ import numpy as np
 from keras.models import Model
 from keras import backend as K
 from keras.layers import Input
+
+
 class customModelCheckpoint(Callback):
     """Save the model after every epoch.
 
@@ -47,7 +49,7 @@ class customModelCheckpoint(Callback):
         self.epochs_since_last_save = 0
 
         if mode not in ['auto', 'min', 'max']:
-            warnings.warn('ModelCheckpoint mode %s is unknown, '
+            print('ModelCheckpoint mode %s is unknown, '
                           'fallback to auto mode.' % (mode),
                           RuntimeWarning)
             mode = 'auto'
@@ -84,7 +86,7 @@ class customModelCheckpoint(Callback):
             if self.save_best_only:
                 current = logs.get(self.monitor)
                 if current is None:
-                    warnings.warn('Can save best model only with %s available, '
+                    print('Can save best model only with %s available, '
                                   'skipping.' % (self.monitor), RuntimeWarning)
                 else:
                     if self.monitor_op(current, self.best):
